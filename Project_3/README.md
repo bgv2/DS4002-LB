@@ -19,108 +19,79 @@ The data processing, model training, and evaluation pipeline was run on Google C
 python -m pip install torch torchvision segmentation-models-pytorch numpy pandas scipy scikit-learn matplotlib opencv-python gradio
 ```
 
-For the notebook, also install `jupyterlab` and `ipykernel`. These provide IPython and a notebook interface. Use `python3` instead of `python` if required by your environment. macOS/Windows were not tested in the correction run; paths are portable, and tzdata supplies America/New_York timezone data. The original EDA notebook/plots were retained, not rerun during this correction. No additional review or test files are required to execute the project.
+For the notebook and interactive exploration, also install `jupyterlab` and `ipykernel`. These provide IPython and a notebook interface. Use python3 instead of python if required by your environment. GPU acceleration (CUDA via Google Colab T4/A100) is recommended for model training and batch inference; evaluation scripts and metric computations run smoothly on CPU or GPU. No additional review or test files are required to execute the project.
 
 ### 2. Documentation map
 
 ```text
-Project_2/
+Project_3/
 ├── Data/
 │   ├── README.MD
-│   ├── annual_crash_counts.csv
-│   ├── cville_crash_incidents.csv
-│   ├── cville_daily_crashes_weather.csv
-│   ├── cville_sarimax_analysis.csv
-│   ├── cville_weather_daily.csv
-│   ├── mi2_annual_crash_counts.png
-│   ├── mi2_daily_crash_distribution.png
+│   ├── data_dictionary.csv
+│   ├── near_duplicate_pairs.csv
 │   ├── provenance.json
 │   ├── quality_report.json
-│   ├── raw/
-│   │   ├── crash_metadata.json
-│   │   ├── crashes.json
-│   │   ├── weather.json
-│   │   └── weather_request.json
-│   └── source_codebook.csv
+│   └── raw/
+│       ├── image_metadata.json
+│       └── raw_data_pointers.txt
 ├── LICENSE
 ├── Output/
 │   ├── Dataset_Tables/
-│   │   ├── annual_crash_counts.csv
-│   │   ├── cville_crash_incidents.csv
-│   │   ├── cville_daily_crashes_weather.csv
-│   │   ├── cville_weather_daily.csv
-│   │   └── source_codebook.csv
+│   │   ├── overall_evaluation_metrics.csv
+│   │   └── per_class_iou_summary.csv
 │   ├── EDA_Figures/
-│   │   ├── eda_figure_01.png
-│   │   ├── eda_figure_02.png
-│   │   ├── eda_figure_03.png
-│   │   ├── eda_figure_04.png
-│   │   ├── eda_figure_05.png
-│   │   ├── eda_figure_06.png
-│   │   ├── eda_figure_07.png
-│   │   ├── eda_figure_08.png
-│   │   └── eda_figure_09.png
-│   ├── EDA_Tables/
-│   │   ├── eda_annual_counts.csv
-│   │   ├── eda_missing_values.csv
-│   │   ├── eda_precipitation_summary.csv
-│   │   ├── eda_summary.csv
-│   │   ├── eda_temperature_summary.csv
-│   │   └── eda_weekday_counts.csv
+│   │   └── segmentation_examples.png
 │   ├── README.MD
 │   ├── Reports/
 │   │   ├── provenance.json
 │   │   └── quality_report.json
-│   ├── cville_sarimax_analysis.csv
-│   ├── sarimax_model_report.json
-│   ├── sarimax_test_forecasts.csv
-│   └── sarimax_validation_report.json
+│   └── predictions/
 ├── README.MD
 ├── REFERENCES.MD
 └── Scripts/
-    ├── Charlottesville_Crash_EDA.ipynb
     ├── README.MD
-    ├── build_dataset.py
-    ├── fit_sarimax_models.py
-    └── prepare_sarimax_data.py
+    ├── 01_data_preprocessing.py
+    ├── 02_near_duplicate_check.py
+    ├── 03_train_segmentation.py
+    ├── 04_evaluate_predictions.py
+    └── 05_gradio_demo.py
 ```
 
-The builder and notebook write new files directly into `Output/`. Its existing subfolders hold organized copies; rerunning does not automatically replace those copies. Frozen inputs remain in `Data/` unless explicitly copied as described below.
+The preprocessing and training scripts write generated files directly into `Output/`. Its existing subfolders hold organized copies; rerunning does not automatically replace those copies. Raw dataset inputs remain accessed externally via Dropbox unless explicitly copied as described below.
 
 ### 3. Reproduce the results
 
-1. **Open a terminal in the repository root**, containing this README and the three project folders. Install the dependencies above. Reruns replace generated files with the same names.
+1. **Open a terminal in the repository root**, containing this README and the three project folders. Install the dependencies listed above. Reruns replace generated files with the same names.
 
-2. **Rebuild the frozen data.** Run:
+2. **Download and link the dataset.** Download the 13 GB dataset archive from the [project Dropbox repository](https://www.dropbox.com/scl/fo/k33qdif15ns2qv2jdxvhx/ANGaa8iPRhvlrvcKXjnmNRc?rlkey=ao2493wzl1cltonowjdbrnp7f&dl=1) and extract it into `Data/raw/` (or mount it via Google Drive in Colab). See [Data/README.MD](Data/README.MD) for expected directory structure and access verification.
 
-   ```bash
-   python Scripts/build_dataset.py
-   ```
-
-   This reads `Data/raw/` and writes five CSVs plus quality/provenance JSONs directly into `Output/`. Expect **5,432 incidents overall, 5,197 study incidents, 3,287 study days, and zero unmatched weather days**. Do not use `--refresh` to reproduce the frozen October 9 snapshot; it downloads current responses.
-
-3. **Prepare the final model input.** Pass the rebuilt daily and weather tables to preparation:
+3. **Run preprocessing and near-duplicate filtering.** Run:
 
    ```bash
-   python -c "from pathlib import Path; import shutil; [shutil.copy2(Path('Output')/n, Path('Data')/n) for n in ['cville_daily_crashes_weather.csv', 'cville_weather_daily.csv']]"
-   python Scripts/prepare_sarimax_data.py
+   python Scripts/01_data_preprocessing.py
+   python Scripts/02_near_duplicate_check.py
    ```
 
-   Expect `Data/cville_sarimax_analysis.csv`, its `Output/` mirror, and `Output/sarimax_validation_report.json`: **3,287 rows, nine columns, no missing values**, and train/validation/test sizes of **2,191/365/731 days**. Raw JSON files are unchanged.
+   This verifies image-mask alignment, builds train/validation/test splits, and flags the 72 candidate near-duplicate image pairs to construct the leakage-aware test subset.
 
-4. **Fit and evaluate the models.** Run:
+4. **Train and evaluate the segmentation models.** Run:
 
    ```bash
-   python Scripts/fit_sarimax_models.py
+   python Scripts/03_train_segmentation.py
+   python Scripts/04_evaluate_predictions.py
    ```
 
-   The search fits 32 candidates on 2017–2022 and selects the no-weather order using rolling next-day validation MAE on 2023. Both SARIMAX variants share the order and refit through 2023. Test forecasts cover 2024–2025, updating states after each observed day without refitting coefficients. Month sine/cosine terms appear in both models; the weather model adds mean temperature, precipitation, snowfall, and wind from seven days earlier. Scaling is learned from 2017–2022.
+   This trains the segmentation architecture (using `segmentation_models_pytorch`) [2] on the training split, validates after each epoch, and saves model checkpoints and test predictions to `Output/`. Evaluation scripts compute mean IoU (mIoU), per-class IoU, predicted vs. ground-truth percent flooded area, and flood impact category agreement across both the full test set and the leakage-aware test subset. Results are exported to `Output/Dataset_Tables/`.
 
-   Mean/median baselines use 2017–2022 for validation and 2017–2023 for testing, then remain fixed throughout each evaluation. Seasonal naive uses the observed count seven days earlier. Candidate intercepts use `trend='c'` when d=0 and `trend='n'` when d=1 [3].
+5. **Launch the Gradio demo and run EDA.** Launch python -m jupyterlab, open the EDA notebook in Scripts/, select your active python environment, restart the kernel, and run all cells. To run the web demo, execute:
 
-   Expected outputs are the existing `Output/sarimax_test_forecasts.csv` and `Output/sarimax_model_report.json`. The CSV contains **3,655 rows: five models × 731 days**, with observed counts, scored/raw forecasts, and clipping flags. The exporter checks its values before writing. The report includes overall/yearly MAE/RMSE, baseline values, fitted intercepts, order search, seven-day circular block-bootstrap intervals (2,000 resamples; seed 4002), residual diagnostics, sensitivity results, and environment. Compare with the expected results below; optimizer/package differences may affect final digits. No manual code changes are required.
+    ```bash
+   python Scripts/05_gradio_demo.py
+   ```
 
-5. **Run EDA.** Launch `python -m jupyterlab`, open `Scripts/Charlottesville_Crash_EDA.ipynb`, select the installed environment, restart the kernel, and run all cells. Start from the project root or Scripts/. Expect **nine numbered PNG figures and six CSV summaries directly in Output/**, with plots displayed in the notebook. Same-day weather associations are descriptive, not forecasting inputs.
+This launches a local/Colab web interface [3] allowing users to upload post-hurricane aerial imagery and view predicted segmentation masks and flood impact severity scores.
+
+**CHANGE EVERYTHING BELOW THIS IS FROM PROJECT 2**
 
 ## Expected modeling results
 
