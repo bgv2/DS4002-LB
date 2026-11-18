@@ -1,22 +1,22 @@
-# Forecasting Crashes in Charlottesville Based on Weather Conditions
+# Flood Impact Scoring from Post-Hurricane Aerial Imagery
 
 **Group:** SLMB: Statistics, Learning, Models, and Beyond  
-**Leader:** Bhargav Garre Venkata  
-**Members:** Lyle Mora, Maggie Parkhurst, and Shriya Ramaka  
-**Course:** DS 4002, Section 002 — Professor Loreto Alonzi
+**Leader:** Lyle Mora  
+**Members:** Bhargav Garre Venkata, Maggie Parkhurst, and Shriya Ramaka  
+**Course:** DS 4002, Section 002 — Professor Loreto Alonzi  
 
-We test whether earlier weather improves next-day forecasts of reported Charlottesville crashes beyond crash history and seasonality. The study combines VDOT crash records [1] and Open-Meteo ERA5 weather [2]: 5,197 reported crashes across 3,287 days in 2017–2025. Our original goal is lower test MAE for weather-enhanced SARIMAX than both SARIMAX without weather and a seven-day seasonal-naive forecast. Constant mean and median benchmarks were added following later MI2 feedback.
+We evaluate semantic segmentation models to identify flooded regions and compute flood impact severity scores from post-hurricane aerial imagery. The study uses the FloodNet high-resolution aerial imagery dataset [1] (totaling approximately 13 GB across training, validation, and test splits). Our primary goal is to achieve strong mean Intersection over Union (mIoU) and flooded-class segmentation performance while accounting for spatial and near-duplicate data leakage across evaluation splits.
 
 ## Repository contents
 
-`Data/` holds frozen source data, intermediate/final tables, metadata, and two explanatory plots. `Scripts/` holds source code and the EDA notebook. `Output/` holds generated tables, figures, model forecasts, and reports. Folder/file capitalization below matches the original repository. Supporting documentation is in [Data/README.MD](Data/README.MD), [Scripts/README.MD](Scripts/README.MD), and [Output/README.MD](Output/README.MD).
+`Data/` holds dataset documentation, provenance metadata, class dictionaries, near-duplicate pair logs, and access instructions for the external 13 GB dataset. `Scripts/` holds source code for data preprocessing, near-duplicate verification, model training, evaluation metrics, and the interactive Gradio demo. `Output/` holds generated figures, metric tables, and preliminary model predictions. Supporting documentation is in [Data/README.MD](Data/README.MD), [Scripts/README.MD](Scripts/README.MD), and [Output/README.MD](Output/README.MD).
 
 ### 1. Software and platform
 
-The corrected data/model pipeline was run on Linux, Python 3.12.14, with NumPy 2.3.5, pandas 2.2.3, SciPy 1.17.0, statsmodels 0.14.6, patsy 1.0.3, Matplotlib 3.10.8, and tzdata 2026.5. The model report records the actual model execution environment. Install the analysis dependencies using:
+The data processing, model training, and evaluation pipeline was run on Google Colab / Linux (Ubuntu), Python 3.10+, with PyTorch, `segmentation_models_pytorch` [2], NumPy, pandas, SciPy, scikit-learn, Matplotlib, OpenCV, and Gradio [3]. Install the core analysis and modeling dependencies using:
 
 ```bash
-python -m pip install numpy==2.3.5 pandas==2.2.3 scipy==1.17.0 statsmodels==0.14.6 patsy==1.0.3 matplotlib==3.10.8 tzdata==2026.5
+python -m pip install torch torchvision segmentation-models-pytorch numpy pandas scipy scikit-learn matplotlib opencv-python gradio
 ```
 
 For the notebook, also install `jupyterlab` and `ipykernel`. These provide IPython and a notebook interface. Use `python3` instead of `python` if required by your environment. macOS/Windows were not tested in the correction run; paths are portable, and tzdata supplies America/New_York timezone data. The original EDA notebook/plots were retained, not rerun during this correction. No additional review or test files are required to execute the project.
