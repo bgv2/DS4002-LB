@@ -91,42 +91,31 @@ The preprocessing and training scripts write generated files directly into `Outp
 
 This launches a local/Colab web interface [3] allowing users to upload post-hurricane aerial imagery and view predicted segmentation masks and flood impact severity scores.
 
-**CHANGE EVERYTHING BELOW THIS IS FROM PROJECT 2**
-
 ## Expected modeling results
 
-| Model | Test MAE | Test RMSE |
-| --- | ---: | ---: |
-| SARIMAX without weather | 1.086120 | 1.395554 |
-| SARIMAX with earlier weather | 1.090465 | 1.400223 |
-| Constant median (predict 1) | 1.114911 | 1.592991 |
-| Constant mean | 1.118596 | 1.429067 |
-| Seven-day seasonal naive | 1.476060 | 1.969327 |
+| Model / Split | Mean IoU (mIoU) | Flooded Class IoU | Percent Flooded MAE | Category Agreement |
+| :--- | :---: | :---: | :---: | :---: |
+| Baseline Segmentation (Full Test) | `[TBD]` | `[TBD]` | `[TBD]` | `[TBD]` |
+| Baseline Segmentation (Leakage-Aware Subset) | `[TBD]` | `[TBD]` | `[TBD]` | `[TBD]` |
 
-The selected order is **(1,0,1)** with seasonal order **(1,0,1,7)** and an intercept. The final test constants are **mean = 1.538732394** and **median = 1**. Validation constants are mean = 1.523505249 and median = 1, calculated before 2023.
-
-Both SARIMAX models beat both constant benchmarks and seasonal naive on test MAE. However, the weather model does not beat the no-weather model, so the original goal is **not met**. The weather-minus-no-weather MAE difference is approximately **+0.004344402** crashes/day, with a reported 95% block-bootstrap interval of **[−0.000654253, 0.009597203]**. This does not demonstrate improvement from the lagged weather features.
+*Note: Full model training and final test-set evaluation metrics are actively in progress for MI4. Preliminary validation outputs and scoring scripts are fully operational in `Scripts/04_evaluate_predictions.py`.*
 
 ## Decisions and limitations
 
-The source records count reported city crashes, not all emergencies or risk per trip. Reporting/publication timing is imperfectly known, so this is retrospective forecasting. SARIMAX is a Gaussian model applied to small counts; negative test point forecasts are clipped at zero for both models, and positive forecasts are not rounded. Validation MAE currently uses raw forecasts. Stationarity/invertibility are not enforced; convergence alone does not guarantee stability. Residual Ljung–Box results are descriptive and are not adjusted for fitted AR/MA degrees of freedom.
-
-The implemented sensitivity check trains on 2017–2019 and forecasts 2020–2021. This is a documented deviation from MI2's planned exclusion of 2020–2021 when fitting through 2023; the two analyses are not equivalent. Full-period EDA is not evidence that the test years were unseen during exploration. Predictive associations do not establish causation.
+* **External Data Hosting:** Due to GitHub file size limits, the 13 GB raw dataset cannot be committed directly to the repository. Reproducibility relies on the frozen Dropbox archive and path configurations documented in [Data/README.MD](Data/README.MD).
+* **Near-Duplicate Spatial Leakage:** Post-hurricane UAV imagery frequently contains overlapping flight paths and near-identical frames. Following manual review of candidate near-duplicate pairs, evaluation metrics are reported on both the standard test split and a leakage-aware subset with near-duplicates removed.
+* **MI3 Scope:** In accordance with MI3 milestones, repository structure, metadata documentation, and evaluation pipelines are fully established, while model hyperparameter tuning, final test-set evaluations, and the Gradio web demo remain in active development toward MI4.
 
 ## License and attribution
 
-The existing [LICENSE](LICENSE) provides MIT terms for project software. Third-party data retain their own source conditions: preserve VDOT terms [1] and Open-Meteo/ERA5 attribution and applicable CC BY 4.0 requirements [2], [4], [5]. Data/README.MD documents unresolved VDOT redistribution conditions. GitHub access and repository visibility are managed by the group.
+The existing [LICENSE](LICENSE) provides MIT terms for project software. Third-party imagery and annotations retain their own source conditions and attribution requirements [1], as documented in [Data/README.MD](Data/README.MD) and [REFERENCES.MD](REFERENCES.MD). GitHub access and repository visibility are managed by the group.
 
 ## References
 
 Numbers apply to this README; Data source_ref tags follow the Data README's numbering. The extended bibliography is in [REFERENCES.MD](REFERENCES.MD).
 
-[1] Virginia Department of Transportation, “Full_Crash,” Virginia Roads, ArcGIS REST Services Directory. Accessed: Oct. 21, 2026. [Online]. Available: https://services.arcgis.com/p5v98VHDX9Atv3l7/arcgis/rest/services/Full_Crash/FeatureServer
+[1] Rahnemoonfar, M., et al., “FloodNet: A High Resolution Aerial Imagery Dataset for Post Flood Scene Understanding,” *IEEE Access*, vol. 9, pp. 89644–89654, 2021.
 
-[2] Open-Meteo, “Historical Weather API.” Accessed: Oct. 21, 2026. [Online]. Available: https://open-meteo.com/en/docs/historical-weather-api
+[2] Yakubovskiy, P., “Segmentation Models PyTorch,” GitHub Repository, 2019. [Online]. Available: https://github.com/qubvel-org/segmentation_models.pytorch
 
-[3] statsmodels developers, “statsmodels.tsa.statespace.sarimax.SARIMAX,” statsmodels documentation. Accessed: Oct. 21, 2026. [Online]. Available: https://www.statsmodels.org/stable/generated/statsmodels.tsa.statespace.sarimax.SARIMAX.html
-
-[4] Open-Meteo, “Terms & Privacy.” Accessed: Oct. 21, 2026. [Online]. Available: https://open-meteo.com/en/terms
-
-[5] Creative Commons, “Attribution 4.0 International (CC BY 4.0).” Accessed: Oct. 21, 2026. [Online]. Available: https://creativecommons.org/licenses/by/4.0/
+[3] Abid, A., et al., “Gradio: Hassle-Free Sharing and Testing of ML Models in the Wild,” arXiv:1906.02569, 2019.
