@@ -2,7 +2,7 @@
 
 **Group:** LB: Learning Beyond  
 **Leader:** Lyle Mora  
-**Members:** Bhargav Garre Venkata
+**Members:** Bhargav Garre Venkata  
 **Course:** DS 4002, Section 002 — Professor Loreto Alonzi  
 
 We evaluate semantic segmentation models to identify flooded regions and compute flood impact severity scores from post-hurricane aerial imagery. The study uses the FloodNet high-resolution aerial imagery dataset [1] (totaling approximately 13 GB across training, validation, and test splits). Our primary goal is to achieve strong mean Intersection over Union (mIoU) and flooded-class segmentation performance while accounting for spatial and near-duplicate data leakage across evaluation splits.
